@@ -4,16 +4,16 @@ const Book = require('../models/book')
 const Author = require('../models/author')
 const path = require('path')
 const fs = require('path')
-const multer = require('multer')
+//const multer = require('multer')
 const uploadPath = path.join('public', Book.coverImageBasePath)
 const mimeTypes = ['image/jpeg', 'image/png', 'image/gif']
 
-const upload = multer({
-    dest: uploadPath,
-    fileFilter: (req, file, callback) => {
-        callback(null, mimeTypes.includes(file.mimetype))
-    }
-})
+// const upload = multer({
+//     dest: uploadPath,
+//     fileFilter: (req, file, callback) => {
+//         callback(null, mimeTypes.includes(file.mimetype))
+//     }
+// })
 
 //All books
 router.get('/', async (req, res) => {
@@ -46,32 +46,33 @@ router.get('/new', async (req, res) => {
 })
 
 //Create Book
-router.post('/', upload.single('cover'), async (req, res) => {
-    const fileName = req.file != null ? req.file.filename : null
+//router.post('/', upload.single('cover'), async (req, res) => {
+router.post('/', async (req, res) => {
+   // const fileName = req.file != null ? req.file.filename : null
     const book = new Book({
         title: req.body.title,
         author: req.body.author,
         publishDate: req.body.publishDate,
         pageCount: req.body.pageCount,
-        description: req.body.description,
-        coverImageName: fileName
+        description: req.body.description
     })
+    saveCover(book, req.body.cover)
     try {
         const newBook = await book.save()
         res.redirect('books')
     } catch {
-        if (book.coverImageName != null) {
-            removerBookCover(book.coverImageName)
-        }
+        // if (book.coverImageName != null) {
+        //     removerBookCover(book.coverImageName)
+        // }
         renderNewPage(res, book, true)
     }
 })
 
-function removerBookCover(filename) {
-    fs.unlink(path.join(uploadPath, filename), err => {
-        if (err) console.error(err)
-    })
-}
+// function removerBookCover(filename) {
+//     fs.unlink(path.join(uploadPath, filename), err => {
+//         if (err) console.error(err)
+//     })
+// }
 
 async function renderNewPage(res, book, hasError = false) {
     try {
@@ -88,5 +89,14 @@ async function renderNewPage(res, book, hasError = false) {
         res.redirect('/books')
     }
 
+}
+
+function saveCover(book, coverEncoded){
+    if(coverEncoded == null) return
+    const cover= JSON.parse(coverEncoded)
+    if(cover != null && mimeTypes.includes(cover.type)){
+        book.coverImage = new Buffer.from(cover.data, 'base64')
+        book.coverImageType = cover.type
+    }
 }
 module.exports = router
