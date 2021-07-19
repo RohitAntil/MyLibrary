@@ -1,1 +1,10 @@
-Main body
+<h2> Recently Added </h2>
+<div>
+    <% if(books != null){ %>
+        <% books.forEach(book => { %>
+            
+            <img height="150" width="100" src="<%= book.coverImagePath %>">
+           
+        <% }) %>
+        <% } %>
+</div>
